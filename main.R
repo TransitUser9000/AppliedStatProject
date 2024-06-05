@@ -20,7 +20,18 @@ test_df <- test_df %>% setNames(descriptive_colnames$Description)
 train_df %>% head() 
 train_df %>% summary() 
 train_df %>% str() 
-train_df %>% cor()
+correl <- train_df %>% cor() 
+
+correl_new <- correl %>% as.data.frame() 
+correl_new$first_var <- rownames(correl)
+
+prepared_cors <- correl_new %>% pivot_longer(-first_var)
+prepared_cors$abs_value <- prepared_cors$value %>% abs() 
+
+prepared_cors <- prepared_cors %>% arrange(desc(abs_value)) %>% filter(abs_value != 1)
+prepared_cors %>% View()
+
+
 
 train_df %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% t()
 # no NA in either of the data sets 
@@ -36,11 +47,13 @@ colnames(train_df)
 
 var_blocks <- c(1, 44, 65, 86)
 var_blocks[var_block + 1] 
-var_block <- 3
+var_block <- 1
 train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrplot(method="color",  
                               # addCoef.col = 'black',
                               diag=FALSE, 
                               type="lower")
+
+
 
 ################################################################################
 # PCA
@@ -164,24 +177,57 @@ summary(pcr)$adj.r.squared # at the moment extremely bad result
 ################################################################################
 # MDS
 ################################################################################
+mds_input_df <- train_df
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 
-train_dist <- dist(t(train_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result %>% summary() # not really necessary...
+
+#get more closer look of variables in the centre
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-110,100),
+     ylim=c(0,50))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+# --> contribution... variables seem to be all at one place -> exclude them 
+
+var_block <- 1
+mds_input_df <- train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1]
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-300,300))
-text(mds_result, labels = colnames(train_df), cex = 0.8, pos = 4)
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 
-mds_result %>% summary()
+# --> tested with varblock 2 and 3, but doesnt work that well AT FIRST GLANCE
+colnames(train_df)
 
-train_dist %>% print()
+mds_input_df <- cbind(train_df[,1:44], train_df[,65:86])
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-300,300))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
 
+# ...zooming in
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-150,00),ylim=c(-50,-40))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
 
+# now for the observations 
+# i.e. "How similar are people regarding all dimensions"
+mds_input_df <- train_df[1:500,] #using less rowss to save computation time
+train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
+     pos = 4, col = c("red", "green", "blue", "black")[train_df$Singles])
+legend("topright", legend = train_df$Singles,
+       col = c("red", "green", "blue", "black"), pch =19)
 
+# --> finding: three groups of people: two larger and one smaller between them 
 
-
-
-
-
-
+colnames(train_df)
+train_df$Singles
+#TODO HIER WEITER find coninous discrete coloring for numerical data
+# also: find solution why no single '1' observation of caravan insurance is visible 
 
 
 
