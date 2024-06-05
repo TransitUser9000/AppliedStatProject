@@ -1,0 +1,151 @@
+
+################################################################################
+# DATA LOADING and GENERAL PREPROCESSING
+################################################################################
+
+library(tidyverse)
+train_df <- read_tsv("Data/ticdata2000.txt")
+test_df <- read_tsv("Data/ticeval2000.txt")
+descriptive_colnames <- read_delim("Data/descriptive_colnames.csv", delim=";")
+descriptive_colnames$Description[2] <- "Numberofhouses1" # change them to get rid of special characters
+descriptive_colnames$Description[3] <- "Avgsizehousehold1"
+
+train_df <- train_df %>% setNames(descriptive_colnames$Description)
+test_df <- test_df %>% setNames(descriptive_colnames$Description)
+
+
+################################################################################
+# EDA
+################################################################################
+train_df %>% head() 
+train_df %>% summary() 
+train_df %>% str() 
+train_df %>% cor()
+
+train_df %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% t()
+# no NA in either of the data sets 
+
+library(corrplot)
+
+train_df %>% cor %>% corrplot(method="color",  
+                                                # addCoef.col = 'black',
+                                                diag=FALSE, 
+                                                type="lower")
+# too much for one plot, thus splitting
+colnames(train_df)
+
+var_blocks <- c(1, 44, 65, 86)
+var_blocks[var_block + 1] 
+var_block <- 3
+train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrplot(method="color",  
+                              # addCoef.col = 'black',
+                              diag=FALSE, 
+                              type="lower")
+
+################################################################################
+# PCA
+################################################################################
+
+library(factoextra)
+pca_input_df <- train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1]
+# because data is of various scale we use normalized PCA
+pca_result <- prcomp(pca_input_df,
+                     center =TRUE, 
+                     scale. = TRUE)
+print("PCA Summary:")
+pca_result %>% summary()
+print("Standard deviations of PCs")
+pca_result$sdev
+print("Rotated component matrix (i.e., the principal component scores)")
+pca_result$x
+print("Proportion of variance explained by each PC")
+pca_result$importance$percentage
+print("Show loadings of the original variables on the PCs  - \n If value is high: high correlation between the PC and the variable")
+pca_result$rotation
+print("Plot the scree plot to visualize the eigenvalues")
+fviz_eig(pca_result)
+print("Biplot: Visualization of the loadings - i.e. the relationship between the PCs and the variables")
+fviz_pca_biplot(pca_result)
+# In this plot, the observations are represented by the points, and the variables are represented by the arrows. The first two principal components (PC1 and PC2) are shown, which explain the most variation in the data.
+# 
+# To interpret the plot, you can look at the position of each observation relative to the variables. For example, if an observation is located in the direction of a variable arrow, it means that the observation has a high value for that variable. Conversely, if an observation is located in the opposite direction of a variable arrow, it means that the observation has a low value for that variable.
+# 
+# Additionally, you can look at the length of each variable arrow to determine the importance of that variable in the PCA. Longer arrows indicate more important variables, while shorter arrows indicate less important variables.
+
+library(ggforce)
+
+# Create a data frame of the PC scores
+pca_scores <- data.frame(PC1 = pca_result$x[,1], PC2 = pca_result$x[,2])
+
+# Add a column for the radius of the circle
+pca_scores$radius <- sqrt(pca_scores$PC1^2 + pca_scores$PC2^2)
+
+# Create the plot
+ggplot(pca_scores, aes(x = PC1, y = PC2)) +
+  geom_point(size = 2, shape = 21, fill = "steelblue", stroke = 0.5) +
+  # geom_circle(aes(r = radius), color = "black", alpha = 0.2) +
+  labs(x = "PC1", y = "PC2", title = "PCA Plot") +
+  theme_bw()
+
+# NEW PART STARTS HERE
+
+plot(pca_result)
+
+plot(pca_result$x[,1:2], pch=20, col="blue", xlab="PC1", ylab="PC2", main="Car market")
+text(pca_result$x[,1:2], labels=rownames(pca_input_df), col="blue", cex=0.8, pos=4)
+# plot in general correct, but not sensible in our case 
+
+biplot(pca_result)
+
+# Variance explained by PCs and cumulative proportion:
+pca_result$sdev^2 /sum(pca_result$sdev^2)
+cumsum(pca_result$sdev^2) /sum(pca_result$sdev^2)
+
+#TODO find variable which can be colored in pca_input_df which is seperated relatively good by the PCs
+# maybe find that out by the previous plots 
+#FIXME change the labels of the legend and the variable correct to the chosen variable 
+plot(pca_result$x[,1:2], pch = 20, col = c("red", "green", "blue", "black")[pca_input_df$Averageincome],
+     xlab = "PC1", ylab = "PC2",
+     main = "Insurance market")
+text(pca_result$x[,1:2], labels = rownames(pca_input_df$Averageincome),
+     col = c("red", "green", "blue", "black")[pca_input_df$Averageincome],
+     cex = 0.8, pos = 4)
+legend("topright", legend = levels(pca_input_df$Averageincome),
+       col = c("red", "green", "blue", "black"), pch =19)
+
+cor_pc_var <- pca_result$rotation
+cor_pc_var
+# par(mfrow=c(1,2))
+plot(cos((0:360)/180*pi), sin((0:360)/180*pi), type = "l", lty = "dashed",
+     col = "red",
+     xlab = "cor with PC1", ylab = "cor with PC2",
+     main = "Insurance market")
+text(cor_pc_var[,1:2], labels = colnames(pca_input_df), cex = 0.8, col = "blue")
+plot(cor_pc_var[,1:2], pch = 20, col = "blue",
+     xlab = "PC1", ylab = "PC2",
+     xlim = c(-2, 2),
+     main = "Insurance market")
+text(cor_pc_var[,1:2], labels = rownames(pca_input_df), col = "blue", cex = 0.8, pos = 4)
+
+
+
+#TODO find sensible solution to avoid overcrowding of the plots 
+
+
+# ----------------------PCR-----------------------------------------------------
+pc_regr <- pca_result$x[,1:2]
+pc_regr
+colnames(train_df)[86]
+# Regression with first two components
+pcr <- lm(train_df$`Numberofmobilehomepolicies0-1` ~ pc_regr - 1)
+summary(pcr)
+
+# Comparing the adjR² of linear regression of ALL VARS and PC-Regr. with only the 
+# first 2 PCs we achieve almost the same score
+summary(pcr)$adj.r.squared # at the moment extremely bad result
+
+# #comparison to linear model
+#TODO find correct variable set (should be all vars except the target in train_df)
+# lin_model <- lm(train_df$`Numberofmobilehomepolicies0-1` ~.)
+# summary(lm_car)
+
