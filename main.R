@@ -46,8 +46,9 @@ train_df %>% cor %>% corrplot(method="color",
 colnames(train_df)
 
 var_blocks <- c(1, 44, 65, 86)
-var_blocks[var_block + 1] 
 var_block <- 1
+var_blocks[var_block + 1] 
+
 train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrplot(method="color",  
                               # addCoef.col = 'black',
                               diag=FALSE, 
@@ -216,11 +217,17 @@ text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blu
 mds_input_df <- train_df[1:500,] #using less rowss to save computation time
 train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
+
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
 text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
-     pos = 4, col = c("red", "green", "blue", "black")[train_df$Singles])
-legend("topright", legend = train_df$Singles,
-       col = c("red", "green", "blue", "black"), pch =19)
+     pos = 4)
+
+left_group <- mds_result %>%  as.data.frame() %>% filter(V1 < -5) %>% nrow()
+middle_group <- mds_result %>%  as.data.frame() %>% filter(V1 < 5, V1 > -5) %>% nrow()
+left_group <- mds_result %>%  as.data.frame() %>% filter(V1 > 5) %>% nrow()
+
+#TODO include test for means for all vars here 
+#also necessary for this: keep original indices from train_data
 
 # --> finding: three groups of people: two larger and one smaller between them 
 
@@ -228,9 +235,32 @@ colnames(train_df)
 train_df$Singles
 #TODO HIER WEITER find coninous discrete coloring for numerical data
 # also: find solution why no single '1' observation of caravan insurance is visible 
-
-
-
+par(mfrow=c(2,2))
+for (rc in 1:2){
+  for (i in 1:4){
+    if (i == 4) {
+      mds_input_df <- train_df %>% sample_n(500) }
+    else {
+      mds_input_df <- train_df[,var_blocks[i]:var_blocks[i + 1] - 1] %>% sample_n(500) #using less rowss to save computation time
+     }
+    if (rc == 1){
+      train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference    
+    }
+    else {
+      train_dist <- dist(t(mds_input_df))
+    }
+  
+    mds_result <- cmdscale(train_dist)
+    plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
+         main = as.character(i))
+    if (rc == 1){
+      text(mds_result, labels = rownames(mds_input_df), cex = 0.8, pos = 4)
+    }
+    else {
+      text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+    }
+  }
+}
 
 ################################################################################
 # DA
