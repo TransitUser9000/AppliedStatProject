@@ -20,7 +20,8 @@ test_df <- test_df %>% setNames(descriptive_colnames$Description)
 train_df %>% head() 
 train_df %>% summary() 
 train_df %>% str() 
-correl <- train_df %>% cor() 
+
+hist(train_df$`Numberofmobilehomepolicies0-1`)
 
 correl_new <- correl %>% as.data.frame() 
 correl_new$first_var <- rownames(correl)
@@ -44,8 +45,10 @@ train_df %>% cor %>% corrplot(method="color",
                                                 # addCoef.col = 'black',
                                                 diag=FALSE, 
                                                 type="lower")
+chosen_cols <- cbind(train_df[,2:3], train_df[,86])
 
-
+library(GGally)
+ggpairs(chosen_cols)
 
 
 # too much for one plot, thus splitting
@@ -219,25 +222,45 @@ text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blu
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-150,00),ylim=c(-50,-40))
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
 
-mds_input_df <- cbind(train_df[,1:44], train_df[,86])
+colnames(train_df)
 
-colnames(mds_input_df)
+mds_input_df <- cbind(train_df[,1:44], train_df[,86])
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-300,300))
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, 
+     col = ifelse(colnames(mds_input_df) == "Numberofmobilehomepolicies0-1", "blue", "red"))
+
+# --> finding: our target, numberofmobilehomepolicies is related to Farmer, Income > 123k, LivingTogether, 
+# Entrepreneur, ContributionprivatethirdpartyinsuranceesL4
+# Further, to romancatholics and Numberofhouses1
+# also interesting: Highleveleducation, SocialclassA and Highstatus are close to each other 
+# and avgsiz ehousehold1 middlemanagement and household with children are close to each other 
+ 
 
 
+mds_input_df <- cbind(train_df[,1:44], train_df[,84]) %>% scale()
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-300,300))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, 
+     col = ifelse(colnames(mds_input_df) == "Numberofpropertyinsurancepolicies", "blue", "red"))
+# --> seems that the numberof... always localize at (0,0), so interpretation above 
+# is probably wrong 
+
+
+
+#-------------------------------------------------------------------------------
 
 # now for the observations 
 # i.e. "How similar are people regarding all dimensions"
 mds_input_df_with_orig_id <- train_df %>% mutate(orig_id=row_number())
 # mds_input_df_with_orig_id$orig_id <- mds_input_df_with_orig_id$orig_id %>% as.data.frame.integer(column_name = "orig_id")
 
-#-------------------------------------------------------------------------------
-my_colors <- c("steelblue", "steelblue", "steelblue", 
-               "blue", "blue", "blue", 
-               "red", "red", "red")
+# my_colors <- c("steelblue", "steelblue", "steelblue", 
+#                "blue", "blue", "blue", 
+#                "red", "red", "red")
 my_colors_Palette <- colorRampPalette(c("red", "blue"))
 
 mds_input_df_with_orig_id <- mds_input_df_with_orig_id %>% sample_n(500) #using less rowss to save computation time
@@ -255,6 +278,10 @@ plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
 text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
      pos = 4, col = my_colors_Palette(no_var_levels)[as.numeric(factor(observed_var))])
 legend("topright", legend = sort(unique(observed_var)), col = my_colors_Palette(no_var_levels), pch=19)
+
+
+# --> finding: three groups of people: two larger and one smaller between them 
+
 observed_var[411]
 
 mds_result <- mds_result %>% 
@@ -280,8 +307,6 @@ rbind(
 
 unique(mds_input_df$Lowerleveleducation)
 
-
-# --> finding: three groups of people: two larger and one smaller between them 
 
 train_df %>% sample_n(200)
 
