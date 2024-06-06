@@ -1,7 +1,6 @@
 
 ################################################################################
 # DATA LOADING and GENERAL PREPROCESSING
-################################################################################
 
 library(tidyverse)
 train_df <- read_tsv("Data/ticdata2000.txt")
@@ -16,7 +15,7 @@ test_df <- test_df %>% setNames(descriptive_colnames$Description)
 
 ################################################################################
 # EDA
-################################################################################
+
 train_df %>% head() 
 train_df %>% summary() 
 train_df %>% str() 
@@ -67,7 +66,6 @@ train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrp
 
 ################################################################################
 # PCA
-################################################################################
 
 library(factoextra)
 pca_input_df <- train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1]
@@ -174,19 +172,57 @@ summary(pcr)$adj.r.squared # at the moment extremely bad result
 
 ################################################################################
 # FA
-################################################################################
 
 ################################################################################
 # CA
-################################################################################
+library(FactoMineR)
+
+ca_df <- train_df[1:100,20:30] # strongly reduced observation number n to analyze individuals individually 
+
+CA(ca_df)
+
+summary(CA(ca_df) , nbelements = Inf , graph = FALSE )
+
+#TODO Although here not suitable! -> Do Interpretation of the result , especially of all the infos in summary
+
+# --> CA is made for datasets with small n (maybe also named), thus CA analysis 
+# is always overcrowded and not suitable here 
+train_df$`Numberofmobilehomepolicies0-1`
+ca_df <- train_df %>% filter(`Numberofmobilehomepolicies0-1` == 1)
+
+CA(ca_df)
+
 
 ################################################################################
 # CCA
-################################################################################
+
+library(CCA)
+ccX <- train_df[,8:9]
+ccY <- train_df[,84:86]
+
+cc_result <- cc(ccX, ccY)
+
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+# --> finding: does not make much sence since too large n and no meaning of each 
+# n individually , maybe only if we want to know the "personality" of individuals 
+# and don't look at the general
+
+ccX <- train_df[20:100,8:9] 
+ccY <- train_df[20:100,84:86]
+
+cc_result <- cc(ccX, ccY)
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = 20:100, cex = 0.8, pos = 4)
+
 
 ################################################################################
 # MDS
-################################################################################
 mds_input_df <- train_df 
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
@@ -343,12 +379,9 @@ for (rc in 1:2){
 
 ################################################################################
 # DA
-################################################################################
 
 ################################################################################
 # Regression
-################################################################################
 
 ################################################################################
 # Logistic Regression
-################################################################################
