@@ -28,10 +28,12 @@ correl_new$first_var <- rownames(correl)
 prepared_cors <- correl_new %>% pivot_longer(-first_var)
 prepared_cors$abs_value <- prepared_cors$value %>% abs() 
 
-prepared_cors <- prepared_cors %>% arrange(desc(abs_value)) %>% filter(abs_value != 1)
+prepared_cors <- prepared_cors %>% 
+  arrange(desc(abs_value)) %>%
+  filter(abs_value != 1)
 prepared_cors %>% View()
-
-
+prepared_cors %>% filter(first_var == "Numberofmobilehomepolicies0-1") %>% 
+  arrange(desc(abs_value))
 
 train_df %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% t()
 # no NA in either of the data sets 
@@ -42,6 +44,10 @@ train_df %>% cor %>% corrplot(method="color",
                                                 # addCoef.col = 'black',
                                                 diag=FALSE, 
                                                 type="lower")
+
+
+
+
 # too much for one plot, thus splitting
 colnames(train_df)
 
@@ -178,7 +184,8 @@ summary(pcr)$adj.r.squared # at the moment extremely bad result
 ################################################################################
 # MDS
 ################################################################################
-mds_input_df <- train_df
+mds_input_df <- train_df 
+
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
@@ -212,24 +219,71 @@ text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blu
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-150,00),ylim=c(-50,-40))
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
 
+mds_input_df <- cbind(train_df[,1:44], train_df[,86])
+
+colnames(mds_input_df)
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-300,300))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4, col = "blue")
+
+
+
 # now for the observations 
 # i.e. "How similar are people regarding all dimensions"
-mds_input_df <- train_df[1:500,] #using less rowss to save computation time
+mds_input_df_with_orig_id <- train_df %>% mutate(orig_id=row_number())
+# mds_input_df_with_orig_id$orig_id <- mds_input_df_with_orig_id$orig_id %>% as.data.frame.integer(column_name = "orig_id")
+
+#-------------------------------------------------------------------------------
+my_colors <- c("steelblue", "steelblue", "steelblue", 
+               "blue", "blue", "blue", 
+               "red", "red", "red")
+my_colors_Palette <- colorRampPalette(c("red", "blue"))
+
+mds_input_df_with_orig_id <- mds_input_df_with_orig_id %>% sample_n(500) #using less rowss to save computation time
+vec_orig_ids <- mds_input_df_with_orig_id[,"orig_id"]
+vec_orig_ids
+mds_input_df <- mds_input_df_with_orig_id %>% select(-orig_id)
+
 train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 
+observed_var <- mds_input_df$Highleveleducation
+no_var_levels <- length(unique(observed_var))
+
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
 text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
-     pos = 4)
+     pos = 4, col = my_colors_Palette(no_var_levels)[as.numeric(factor(observed_var))])
+legend("topright", legend = sort(unique(observed_var)), col = my_colors_Palette(no_var_levels), pch=19)
+observed_var[411]
 
-left_group <- mds_result %>%  as.data.frame() %>% filter(V1 < -5) %>% nrow()
-middle_group <- mds_result %>%  as.data.frame() %>% filter(V1 < 5, V1 > -5) %>% nrow()
-left_group <- mds_result %>%  as.data.frame() %>% filter(V1 > 5) %>% nrow()
+mds_result <- mds_result %>% 
+  as.data.frame() %>% cbind(vec_orig_ids)
+left_group <- mds_result  %>% filter(V1 < -5) 
+middle_group <- mds_result %>% filter(V1 < 5, V1 > -5) 
+right_group <- mds_result  %>% filter(V1 > 5) 
 
-#TODO include test for means for all vars here 
-#also necessary for this: keep original indices from train_data
+left_group_attr <- mds_input_df_with_orig_id %>% filter(orig_id %in% left_group$orig_id) 
+
+middle_group_attr <- mds_input_df_with_orig_id %>% filter(orig_id %in% middle_group$orig_id) 
+
+right_group_attr <- mds_input_df_with_orig_id %>% filter(orig_id %in% right_group$orig_id) 
+
+colMeans(left_group_attr) 
+rbind(colMedian(left_group_attr), colMeans(middle_group_attr), colMeans(right_group_attr)) %>% View()
+
+rbind(
+  apply(left_group_attr, 2, median),
+  apply(middle_group_attr, 2, median),
+  apply(right_group_attr, 2, median)
+  ) %>% View()
+
+unique(mds_input_df$Lowerleveleducation)
+
 
 # --> finding: three groups of people: two larger and one smaller between them 
+
+train_df %>% sample_n(200)
 
 colnames(train_df)
 train_df$Singles
