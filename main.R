@@ -182,23 +182,101 @@ calc_d <- function(k){
 
 choice_k <- data.frame(k = 30:90)
 choice_k$d <- sapply(choice_k$k, FUN = calc_d)
-fac_k <- 7
+fac_k <- 5
 # --> max k here is 73
 
-fac_result <- factanal(~., 
+
+plot_fca_result <- function(fac_result, fac_df, str_rotation) {
+  plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
+       type="l",
+       lty="dotted",
+       xlab = "Factor 1",
+       ylab = "Factor 2",
+       main=str_rotation)
+  abline(h = 0)
+  abline(v = 0)
+  text(fac_result$loadings[,1:2],
+       labels=colnames(fac_df),
+       col="black")
+}
+
+par(mfrow=c(1,1))
+
+fac_result_pc_no_rotation <- factanal(~., 
                     factors=5,
+                    method = "pc",
                     rotation="none",
                     scores="regression",
                     data=data.frame(fac_df))
-fac_result
+
+plot_fca_result(fac_result = fac_result_pc_no_rotation, 
+                fac_df = fac_df, 
+                str_rotation = "PC-FA - no rotation")
+
+plot(fac_result_pc_no_rotation$scores, type = "n")
+text(fac_result_pc_no_rotation$scores, rownames(fac_result_pc_no_rotation$scores))
+
+# apply test for the number of factors
+
+fac_result_pc_no_rotation 
+# --> we see in the end of the output: p-value is 0 < 0.05, i.e. we reject H_0 (5 factors are not sufficient)
+#TODO find out why factanal()h does not accept igher values
+
+par(mfrow=c(2,2))
 
 # Varimax rotation
-fac_result_varimax <- factanal(~.,
-                            factors=k,
+fac_result_pc_varimax <- factanal(~.,
+                            factors=fac_k,
+                            method = "pc",
                             sources="regression", 
                             rotation="varimax",
                             data=data.frame(fac_df))
 
+plot_fca_result(fac_result = fac_result_pc_varimax, 
+                fac_df = fac_df, 
+                str_rotation = "PC-FA - varimax")
+
+# Varimax rotation
+fac_result_ml_varimax <- factanal(~.,
+                                  factors=fac_k,
+                                  method = "ml",
+                                  sources="regression", 
+                                  rotation="varimax",
+                                  data=data.frame(fac_df))
+
+plot_fca_result(fac_result = fac_result_ml_varimax, 
+                fac_df = fac_df, 
+                str_rotation = "ML-FA - varimax")
+
+# comparison of both last analyses: Do the loadings group in the same manner? 
+# --> They do
+
+# repeat previous step for another number of common factors k
+fac_k <- 2
+
+# Varimax rotation
+fac_result_pc_varimax <- factanal(~.,
+                                  factors=fac_k,
+                                  method = "pc",
+                                  sources="regression", 
+                                  rotation="varimax",
+                                  data=data.frame(fac_df))
+
+plot_fca_result(fac_result = fac_result_pc_varimax, 
+                fac_df = fac_df, 
+                str_rotation = "PC-FA - varimax")
+
+# Varimax rotation
+fac_result_ml_varimax <- factanal(~.,
+                                  factors=fac_k,
+                                  method = "ml",
+                                  sources="regression", 
+                                  rotation="varimax",
+                                  data=data.frame(fac_df))
+
+plot_fca_result(fac_result = fac_result_ml_varimax, 
+                fac_df = fac_df, 
+                str_rotation = "ML-FA - varimax")
 
 
 # oblique rotation
@@ -208,45 +286,7 @@ fac_result_oblique <- factanal(~.,
                                rotation="promax",
                                data=data.frame(fac_df))
 
-par(mfrow=c(2,2))
-plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
-     type="l",
-     lty="dotted",
-     xlab = "Factor 1",
-     ylab = "Factor 2",
-     main="athletic (unrotated)")
-abline(h = 0)
-abline(v = 0)
-text(fac_result$loadings[,1:2],
-     labels=colnames(fac_df),
-     col="black")
-plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
-     type="l",
-     lty="dotted",
-     xlab = "Factor 1",
-     ylab = "Factor 2",
-     main="athletic (Varimax)")
-abline(h = 0)
-abline(v = 0)
-text(fac_result_varimax$loadings[,1:2],
-     labels=colnames(fac_df),
-     col="black")
 
-plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
-     type="l",
-     lty="dotted",
-     xlab = "Factor 1",
-     ylab = "Factor 2",
-     main="Fac_df (Oblique)")
-abline(h = 0)
-abline(v = 0)
-text(fac_result_oblique$loadings[,1:2],
-     labels=colnames(fac_df),
-     col="black")
-
-
-
-par(mfrow=c(1,1))
 ################################################################################
 # CA
 library(FactoMineR)
