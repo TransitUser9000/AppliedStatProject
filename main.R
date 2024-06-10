@@ -173,6 +173,82 @@ summary(pcr)$adj.r.squared # at the moment extremely bad result
 ################################################################################
 # FA
 
+fac_df <- train_df
+fac_p <- ncol(fac_df)
+
+calc_d <- function(k){
+  0.5*(fac_p - k)^2 - 0.5*(fac_p + k)
+}
+
+choice_k <- data.frame(k = 30:90)
+choice_k$d <- sapply(choice_k$k, FUN = calc_d)
+fac_k <- 7
+# --> max k here is 73
+
+
+
+fac_result <- factanal(~., 
+                    factors=5,
+                    rotation="none",
+                    scores="regression",
+                    data=data.frame(fac_df))
+fac_result
+
+# Varimax rotation
+fac_result_varimax <- factanal(~.,
+                            factors=k,
+                            sources="regression", 
+                            rotation="varimax",
+                            data=data.frame(fac_df))
+
+
+
+# oblique rotation
+fac_result_oblique <- factanal(~.,
+                               factors=k,
+                               sources="regression", 
+                               rotation="promax",
+                               data=data.frame(fac_df))
+
+par(mfrow=c(2,2))
+plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
+     type="l",
+     lty="dotted",
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     main="athletic (unrotated)")
+abline(h = 0)
+abline(v = 0)
+text(fac_result$loadings[,1:2],
+     labels=colnames(fac_df),
+     col="black")
+plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
+     type="l",
+     lty="dotted",
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     main="athletic (Varimax)")
+abline(h = 0)
+abline(v = 0)
+text(fac_result_varimax$loadings[,1:2],
+     labels=colnames(fac_df),
+     col="black")
+
+plot(cbind(cos((0:360)/180*pi),sin((0:360)/180*pi)),
+     type="l",
+     lty="dotted",
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     main="Fac_df (Oblique)")
+abline(h = 0)
+abline(v = 0)
+text(fac_result_oblique$loadings[,1:2],
+     labels=colnames(fac_df),
+     col="black")
+
+
+
+par(mfrow=c(1,1))
 ################################################################################
 # CA
 library(FactoMineR)
