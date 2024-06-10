@@ -185,8 +185,6 @@ choice_k$d <- sapply(choice_k$k, FUN = calc_d)
 fac_k <- 7
 # --> max k here is 73
 
-
-
 fac_result <- factanal(~., 
                     factors=5,
                     rotation="none",
