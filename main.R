@@ -173,7 +173,8 @@ summary(pcr)$adj.r.squared # at the moment extremely bad result
 ################################################################################
 # FA
 
-fac_df <- train_df
+fac_df <- train_df 
+fac_df
 fac_p <- ncol(fac_df)
 
 calc_d <- function(k){
@@ -198,12 +199,18 @@ plot_fca_result <- function(fac_result, fac_df, str_rotation) {
   text(fac_result$loadings[,1:2],
        labels=colnames(fac_df),
        col="black")
+  
+  
+  plot(fac_result$scores, type = "n")
+  text(fac_result$scores, rownames(fac_result$scores), xlim = c(-5, 5), ylim = c(-5, 5))
+  
 }
 
 par(mfrow=c(1,1))
 
+# strategy taken from lecture slide 37
 fac_result_pc_no_rotation <- factanal(~., 
-                    factors=5,
+                    factors=fac_k,
                     method = "pc",
                     rotation="none",
                     scores="regression",
@@ -213,12 +220,8 @@ plot_fca_result(fac_result = fac_result_pc_no_rotation,
                 fac_df = fac_df, 
                 str_rotation = "PC-FA - no rotation")
 
-plot(fac_result_pc_no_rotation$scores, type = "n")
-text(fac_result_pc_no_rotation$scores, rownames(fac_result_pc_no_rotation$scores))
-
 # apply test for the number of factors
 
-fac_result_pc_no_rotation 
 # --> we see in the end of the output: p-value is 0 < 0.05, i.e. we reject H_0 (5 factors are not sufficient)
 #TODO find out why factanal()h does not accept igher values
 
