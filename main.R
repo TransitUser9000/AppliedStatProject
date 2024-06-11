@@ -367,11 +367,13 @@ CA(ca_df)
 # CCA
 
 library(CCA)
-ccX <- train_df[,8:9]
-ccY <- train_df[,84:86]
+train_df %>% colnames()
+colnames(train_df[,25:29])
+ccX <- train_df[,25:29]
+ccY <- train_df[,16:18]
 
 cc_result <- cc(ccX, ccY)
-
+cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
 plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
