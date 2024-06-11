@@ -496,13 +496,13 @@ for (rc in 1:2){
 
 ################################################################################
 # DA
-
-library(MASS)
-train_df$`Numberofmobilehomepolicies0-1`
-lda_result <- lda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
-lda_result
-
-qda-
+# 
+# library(MASS)
+# train_df$`Numberofmobilehomepolicies0-1`
+# lda_result <- lda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
+# lda_result
+# 
+# qda-
 
 ################################################################################
 # Regression
