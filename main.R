@@ -12,10 +12,15 @@ descriptive_colnames$Description[3] <- "Avgsizehousehold1"
 L0_cat <- read_delim("Data/L0_categories.csv", delim=";", col_names = F)
 L0_cat[5, 2] <- "Mixed Seniors (Cat 5)" 
 
+L2_cat <- read_delim("Data/L2_categories.csv", delim=";", col_names = F)
+L2_cat
+
+
 train_df <- train_df %>% setNames(descriptive_colnames$Description)
 test_df <- test_df %>% setNames(descriptive_colnames$Description)
 
 train_df %>% View()
+colnames(train_df)
 
 cstype <- train_df[, c(1, 60:86)] %>% 
   group_by(CustomerSubtypeseeL0) %>% 
@@ -28,17 +33,31 @@ cstype <- train_df[, c(1, 60:86)] %>%
 
 
 future_rownames <- cstype$Cust_Subtype
-cstype
 cstype <- cstype %>% select(-Cust_Subtype)
-
-cstype <- scale(cstype) %>% as_tibble() 
 cstype <- cstype[1:40,]
 rownames(cstype) <- future_rownames[1:40]
-
 rownames(cstype)
+
+
+#---------
+
+
+cmtype <- train_df[, c(5, 60:86)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(`Numberofprivatethirdpartyinsurance1-12`:`Numberofmobilehomepolicies0-1`, mean)) %>% 
+  full_join(L2_cat, by= c("CustomermaintypeseeL2" = "X1")) %>% 
+  rename(Cust_Maintype = X2) %>% 
+  select(Cust_Maintype, everything()) %>% 
+  select(-CustomermaintypeseeL2) 
+
+
+future_rownames <- cmtype$Cust_Maintype
+cmtype <- cmtype %>% select(-Cust_Maintype)
+cmtype <- cmtype[1:9,] # removed col "Farmers", since they seem to be an outlier 
+rownames(cmtype) <- future_rownames[1:9]
+rownames(cmtype)
 cstype %>% View()
-
-
+rownames(cmtype)
 ################################################################################
 # EDA
 
@@ -326,6 +345,14 @@ CA(ca_df)
 
 summary(CA(ca_df) , nbelements = Inf)
 
+ca_df <- t(cmtype)
+
+CA(ca_df)
+rownames(cmtype)
+# --> farmers seem to be outlier , thus they are excluded by 1:9 above in cmtype creation
+
+# OLD
+
 #TODO Although here not suitable! -> Do Interpretation of the result , especially of all the infos in summary
 
 # --> CA is made for datasets with small n (maybe also named), thus CA analysis 
@@ -366,6 +393,16 @@ text(plotable, labels = 20:100, cex = 0.8, pos = 4)
 
 ################################################################################
 # MDS
+
+
+mds_input_df <- t(cmtype)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+
 
 mds_input_df <- t(cstype)
 
