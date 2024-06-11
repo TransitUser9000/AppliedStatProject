@@ -9,8 +9,34 @@ descriptive_colnames <- read_delim("Data/descriptive_colnames.csv", delim=";")
 descriptive_colnames$Description[2] <- "Numberofhouses1" # change them to get rid of special characters
 descriptive_colnames$Description[3] <- "Avgsizehousehold1"
 
+L0_cat <- read_delim("Data/L0_categories.csv", delim=";", col_names = F)
+L0_cat[5, 2] <- "Mixed Seniors (Cat 5)" 
+
 train_df <- train_df %>% setNames(descriptive_colnames$Description)
 test_df <- test_df %>% setNames(descriptive_colnames$Description)
+
+train_df %>% View()
+
+cstype <- train_df[, c(1, 60:86)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(`Numberofprivatethirdpartyinsurance1-12`:`Numberofmobilehomepolicies0-1`, mean)) %>% 
+  full_join(L0_cat, by= c("CustomerSubtypeseeL0" = "X1")) %>% 
+  rename(Cust_Subtype = X2) %>% 
+  select(Cust_Subtype, everything()) %>% 
+  select(-CustomerSubtypeseeL0) 
+
+
+
+future_rownames <- cstype$Cust_Subtype
+cstype
+cstype <- cstype %>% select(-Cust_Subtype)
+
+cstype <- scale(cstype) %>% as_tibble() 
+cstype <- cstype[1:40,]
+rownames(cstype) <- future_rownames[1:40]
+
+rownames(cstype)
+cstype %>% View()
 
 
 ################################################################################
@@ -294,11 +320,11 @@ fac_result_oblique <- factanal(~.,
 # CA
 library(FactoMineR)
 
-ca_df <- train_df[1:100,20:30] # strongly reduced observation number n to analyze individuals individually 
+ca_df <- t(cstype)
 
 CA(ca_df)
 
-summary(CA(ca_df) , nbelements = Inf , graph = FALSE )
+summary(CA(ca_df) , nbelements = Inf)
 
 #TODO Although here not suitable! -> Do Interpretation of the result , especially of all the infos in summary
 
@@ -340,6 +366,19 @@ text(plotable, labels = 20:100, cex = 0.8, pos = 4)
 
 ################################################################################
 # MDS
+
+mds_input_df <- t(cstype)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+mds_result %>% summary() # not really necessary...
+
+
+
+# OLD 
 mds_input_df <- train_df 
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
@@ -497,13 +536,15 @@ for (rc in 1:2){
 ################################################################################
 # DA
 # 
-# library(MASS)
-# train_df$`Numberofmobilehomepolicies0-1`
-# lda_result <- lda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
-# lda_result
-# 
-# qda-
+library(MASS)
+train_df$`Numberofmobilehomepolicies0-1`
+lda_result <- lda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
+lda_result
 
+qda_result <- qda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
+
+
+?lda()
 ################################################################################
 # Regression
 
