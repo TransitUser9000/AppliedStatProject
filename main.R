@@ -5,6 +5,7 @@
 library(tidyverse)
 train_df <- read_tsv("Data/ticdata2000.txt")
 test_df <- read_tsv("Data/ticeval2000.txt")
+test_target <- read_tsv("Data/tictgts2000.txt")
 descriptive_colnames <- read_delim("Data/descriptive_colnames.csv", delim=";")
 descriptive_colnames$Description[2] <- "Numberofhouses1" # change them to get rid of special characters
 descriptive_colnames$Description[3] <- "Avgsizehousehold1"
@@ -702,7 +703,58 @@ regr_plot <- regsubsets(TARGET~., data = train_pcr,
                         method="backward", nbest=1)
 plot(regr_plot, scale = "adjr2")
 
-
+#TODO include DUMMY variables for customer types
 
 ################################################################################
 # Logistic Regression
+library(caret)
+
+# first try without any adjustments 
+lreg_model <- glm(`Numberofmobilehomepolicies0-1` ~ ., data = train_df, 
+                   family = binomial(logit))
+summary(lreg_model)
+
+preds <- predict(lreg_model, newdata = test_df, type = "response") 
+
+conf_mat <- confusionMatrix(data = factor(ifelse(preds > 0.5, 1, 0)), reference = factor(test_target$`0`))
+conf_mat # shows also specifi. accuracy and precision 
+
+library(pROC) 
+
+# Calculate the ROC curve
+roc_obj <- roc(response = test_target$`0`, predictor = preds)
+
+# Plot the ROC curve
+plot(roc_obj, main = "ROC Curve for Ligistic Regr. Model",
+     col = "blue", lwd = 2,
+     xlab = "False Positive Rate (1 - Specificity)",
+     ylab = "True Positive Rate (Sensitivity)")
+#TODO find out why x-axis is in wrong order , doesn't make sense this way
+
+# PCLR 
+
+library(factoextra)
+pca_model <- prcomp(train_df[,1:85], scale. = TRUE)
+
+fviz_eig(pca_model) # plot the scree plot for determination of number of PCs to take
+
+# biplot(pca_model) overcrowded and takes a while to compute
+
+train_pcr <- cbind(pca_model$x[,1:3], train_df$`Numberofmobilehomepolicies0-1`) %>% 
+  as_data_frame() 
+train_pcr <-  train_pcr %>%  rename(TARGET = last(colnames(train_pcr)))  
+
+
+
+pclr_model <- glm(TARGET ~ ., data = train_pcr, 
+                   family = binomial(logit))
+summary(pclr_model)
+
+preds <- predict(pclr_model, newdata = test_df, type = "response") 
+
+conf_mat <- confusionMatrix(data = factor(ifelse(preds > 0.5, 1, 0)), reference = factor(test_target$`0`))
+conf_mat # shows also specifi. accuracy and precision 
+
+#TODO hier weiter: find solution for problem that we need the PCws also for the 
+# test set, how to calculate them ?
+
