@@ -48,7 +48,7 @@ cstype <- cstype[1:40,]
 rownames(cstype) <- future_rownames[1:40]
 
 
-#---------
+#---------Creation of aggregated su b data sets of train_df
 
 
 cmtype <- train_df[, c(5, 60:86)] %>% 
@@ -64,6 +64,60 @@ future_rownames <- cmtype$Cust_Maintype
 cmtype <- cmtype %>% select(-Cust_Maintype)
 cmtype <- cmtype[1:9,] # removed col "Farmers", since they seem to be an outlier 
 rownames(cmtype) <- future_rownames[1:9]
+
+#-------------
+cm_education <- train_df[, c(5, dom_education)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean))
+cm_education <- cm_education[,2:ncol(cm_education)]
+rownames(cm_education) <- L2_cat[, 2] %>% t()
+
+cm_car <- train_df[, c(5, dom_car)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean)) 
+cm_car <- cm_car[,2:ncol(cm_car)]
+rownames(cm_car) <- L2_cat[, 2] %>% t()
+
+
+cm_income <- train_df[, c(5, dom_income)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean))
+cm_income <- cm_income[,2:ncol(cm_income)]
+rownames(cm_income) <- L2_cat[, 2] %>% t()
+
+cm_job <- train_df[, c(5, dom_job)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean)) 
+cm_job <- cm_job[,2:ncol(cm_job)]
+rownames(cm_job) <- L2_cat[, 2] %>% t()
+
+cs_income <- train_df[, c(1, dom_income)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(everything(), mean))
+cs_income <- cs_income[1:40,2:ncol(cs_income)]
+rownames(cs_income) <- L0_cat[1:40, 2] %>% t()
+
+cs_job <- train_df[, c(1, dom_job)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(everything(), mean)) 
+cs_job <- cs_job[1:40,2:ncol(cs_job)]
+rownames(cs_job) <- L0_cat[1:40, 2] %>% t()
+
+
+# too much for one plot, thus splitting
+colnames(train_df)
+
+var_blocks <- c(1, 44, 65, 86)
+var_block <- 1
+var_blocks[var_block + 1] 
+
+train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrplot(method="color",  
+                                                                                    # addCoef.col = 'black',
+                                                                                    diag=FALSE, 
+                                                                                    type="lower")
+
+
+
 ################################################################################
 # EDA
 
@@ -99,19 +153,6 @@ chosen_cols <- cbind(train_df[,2:3], train_df[,86])
 
 library(GGally)
 ggpairs(chosen_cols)
-
-
-# too much for one plot, thus splitting
-colnames(train_df)
-
-var_blocks <- c(1, 44, 65, 86)
-var_block <- 1
-var_blocks[var_block + 1] 
-
-train_df[,var_blocks[var_block]:var_blocks[var_block + 1] - 1] %>% cor %>% corrplot(method="color",  
-                              # addCoef.col = 'black',
-                              diag=FALSE, 
-                              type="lower")
 
 
 
@@ -357,6 +398,14 @@ CA(ca_df)
 rownames(cmtype)
 # --> farmers seem to be outlier , thus they are excluded by 1:9 above in cmtype creation
 
+# since principle is shown now, starting now with short version
+ca_df <- t(cm_education)
+cm_education %>% t() %>% CA()
+cm_car %>% t() %>% CA()
+cm_income %>% t() %>% CA()
+cm_job %>% t() %>% CA()
+cs_income %>% t() %>% CA()
+cs_job %>% t() %>% CA()
 # OLD
 
 #TODO Although here not suitable! -> Do Interpretation of the result , especially of all the infos in summary
@@ -374,17 +423,6 @@ CA(ca_df)
 
 library(CCA)
 
-cm_education <- train_df[, c(5, dom_education)] %>% 
-  group_by(CustomermaintypeseeL2) %>% 
-  summarise(across(everything(), mean))
-cm_education <- cm_education[,2:ncol(cm_education)]
-rownames(cm_education) <- L2_cat[, 2] %>% t()
-
-cm_car <- train_df[, c(5, dom_car)] %>% 
-  group_by(CustomermaintypeseeL2) %>% 
-  summarise(across(everything(), mean)) 
-cm_car <- cm_car[,2:ncol(cm_car)]
-rownames(cm_car) <- L2_cat[, 2] %>% t()
 
 
 ccX <- cm_education
@@ -399,18 +437,6 @@ text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 #-----------
 
-cm_income <- train_df[, c(5, dom_income)] %>% 
-  group_by(CustomermaintypeseeL2) %>% 
-  summarise(across(everything(), mean))
-cm_income <- cm_income[,2:ncol(cm_income)]
-rownames(cm_income) <- L2_cat[, 2] %>% t()
-
-cm_job <- train_df[, c(5, dom_job)] %>% 
-  group_by(CustomermaintypeseeL2) %>% 
-  summarise(across(everything(), mean)) 
-cm_job <- cm_job[,2:ncol(cm_job)]
-rownames(cm_job) <- L2_cat[, 2] %>% t()
-
 
 ccX <- cm_income
 ccY <- cm_job
@@ -423,18 +449,6 @@ plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 #----------------
-cs_income <- train_df[, c(1, dom_income)] %>% 
-  group_by(CustomerSubtypeseeL0) %>% 
-  summarise(across(everything(), mean))
-cs_income <- cs_income[1:40,2:ncol(cs_income)]
-rownames(cs_income) <- L0_cat[1:40, 2] %>% t()
-
-cs_job <- train_df[, c(1, dom_job)] %>% 
-  group_by(CustomerSubtypeseeL0) %>% 
-  summarise(across(everything(), mean)) 
-cs_job <- cs_job[1:40,2:ncol(cs_job)]
-rownames(cs_job) <- L0_cat[1:40, 2] %>% t()
-
 
 ccX <- cs_income
 ccY <- cs_job
@@ -620,10 +634,6 @@ rbind(
 unique(mds_input_df$Lowerleveleducation)
 
 
-train_df %>% sample_n(200)
-
-colnames(train_df)
-train_df$Singles
 #TODO HIER WEITER find coninous discrete coloring for numerical data
 # also: find solution why no single '1' observation of caravan insurance is visible 
 par(mfrow=c(2,2))
@@ -667,6 +677,32 @@ qda_result <- qda(`Numberofmobilehomepolicies0-1` ~ . , data =train_df)
 ?lda()
 ################################################################################
 # Regression
+
+library("leaps")
+
+# first, without any preprocessing all the data plugged into the model
+leaps(x = train_df[,63:82], y = train_df$`Numberofmobilehomepolicies0-1`, method="adjr2", nbest=1)
+
+regr_plot <- regsubsets(`Numberofmobilehomepolicies0-1`~., data = train_df, 
+                        method="backward", nbest=1)
+plot(regr_plot, scale = "adjr2")
+
+# --> only R² of 0.052  -> very poor result
+
+# PCR 
+#TODO look up if categorical vars destroy PCA and general robustness of PCA
+pca_model <- prcomp(train_df[,1:85], scale. = TRUE)
+train_pcr <- cbind(pca_model$x, train_df$`Numberofmobilehomepolicies0-1`) %>% 
+  as_data_frame() 
+train_pcr <-  train_pcr %>%  rename(TARGET = last(colnames(train_pcr)))  
+pcr_model <- lm(TARGET ~ ., data = train_pcr)
+summary(pcr_model)$r.squared
+
+regr_plot <- regsubsets(TARGET~., data = train_pcr, 
+                        method="backward", nbest=1)
+plot(regr_plot, scale = "adjr2")
+
+
 
 ################################################################################
 # Logistic Regression
