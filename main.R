@@ -19,8 +19,18 @@ L2_cat
 train_df <- train_df %>% setNames(descriptive_colnames$Description)
 test_df <- test_df %>% setNames(descriptive_colnames$Description)
 
-train_df %>% View()
-colnames(train_df)
+dom_socialclass <- 25:29
+dom_car <- 32:34
+dom_income <- 37:41
+dom_education <- 16:18
+dom_household <- 14:15
+dom_religion <- 7:10
+dom_job <- 19:24
+
+dom_contrib <- 43:64
+dom_nopol <- 65:86
+
+
 
 cstype <- train_df[, c(1, 60:86)] %>% 
   group_by(CustomerSubtypeseeL0) %>% 
@@ -36,7 +46,6 @@ future_rownames <- cstype$Cust_Subtype
 cstype <- cstype %>% select(-Cust_Subtype)
 cstype <- cstype[1:40,]
 rownames(cstype) <- future_rownames[1:40]
-rownames(cstype)
 
 
 #---------
@@ -55,9 +64,6 @@ future_rownames <- cmtype$Cust_Maintype
 cmtype <- cmtype %>% select(-Cust_Maintype)
 cmtype <- cmtype[1:9,] # removed col "Farmers", since they seem to be an outlier 
 rownames(cmtype) <- future_rownames[1:9]
-rownames(cmtype)
-cstype %>% View()
-rownames(cmtype)
 ################################################################################
 # EDA
 
@@ -367,10 +373,85 @@ CA(ca_df)
 # CCA
 
 library(CCA)
-train_df %>% colnames()
+
+cm_education <- train_df[, c(5, dom_education)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean))
+cm_education <- cm_education[,2:ncol(cm_education)]
+rownames(cm_education) <- L2_cat[, 2] %>% t()
+
+cm_car <- train_df[, c(5, dom_car)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean)) 
+cm_car <- cm_car[,2:ncol(cm_car)]
+rownames(cm_car) <- L2_cat[, 2] %>% t()
+
+
+ccX <- cm_education
+ccY <- cm_car
+
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+#-----------
+
+cm_income <- train_df[, c(5, dom_income)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean))
+cm_income <- cm_income[,2:ncol(cm_income)]
+rownames(cm_income) <- L2_cat[, 2] %>% t()
+
+cm_job <- train_df[, c(5, dom_job)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean)) 
+cm_job <- cm_job[,2:ncol(cm_job)]
+rownames(cm_job) <- L2_cat[, 2] %>% t()
+
+
+ccX <- cm_income
+ccY <- cm_job
+
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+#----------------
+cs_income <- train_df[, c(1, dom_income)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(everything(), mean))
+cs_income <- cs_income[1:40,2:ncol(cs_income)]
+rownames(cs_income) <- L0_cat[1:40, 2] %>% t()
+
+cs_job <- train_df[, c(1, dom_job)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(everything(), mean)) 
+cs_job <- cs_job[1:40,2:ncol(cs_job)]
+rownames(cs_job) <- L0_cat[1:40, 2] %>% t()
+
+
+ccX <- cs_income
+ccY <- cs_job
+
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+
+#-----------
+
 colnames(train_df[,25:29])
-ccX <- train_df[,25:29]
-ccY <- train_df[,16:18]
+ccX <- train_df[,dom_education]
+ccY <- train_df[,dom_socialclass]
 
 cc_result <- cc(ccX, ccY)
 cc_result
