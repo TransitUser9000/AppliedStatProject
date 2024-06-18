@@ -397,6 +397,8 @@ ca_df <- t(cmtype)
 
 CA(ca_df)
 rownames(cmtype)
+
+#TODO aus Gespr. schauen wie wir Prozentzahlen implementieren
 # --> farmers seem to be outlier , thus they are excluded by 1:9 above in cmtype creation
 
 # since principle is shown now, starting now with short version
@@ -429,6 +431,8 @@ library(CCA)
 ccX <- cm_education
 ccY <- cm_car
 
+colnames(cm_education)
+colnames(cm_car)
 cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
@@ -437,6 +441,7 @@ plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 #-----------
+
 
 
 ccX <- cm_income
@@ -758,3 +763,6 @@ conf_mat # shows also specifi. accuracy and precision
 #TODO hier weiter: find solution for problem that we need the PCws also for the 
 # test set, how to calculate them ?
 
+
+# schauen wwelche Vars normalverteilt sind
+# bei PCqa alle ohne Main und Subtype
