@@ -146,10 +146,10 @@ train_df %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% t()
 
 library(corrplot)
 
-train_df %>% cor %>% corrplot(method="color",  
+# train_df %>% cor %>% corrplot(method="color",  
                                                 # addCoef.col = 'black',
-                                                diag=FALSE, 
-                                                type="lower")
+                                                # diag=FALSE, 
+                                                # type="lower")
 chosen_cols <- cbind(train_df[,2:3], train_df[,86])
 
 library(GGally)
