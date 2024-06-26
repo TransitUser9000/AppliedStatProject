@@ -498,7 +498,7 @@ text(plotable, labels = 20:100, cex = 0.8, pos = 4)
 # MDS
 
 
-mds_input_df <- t(cmtype)
+mds_input_df <- t(cm_car)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)

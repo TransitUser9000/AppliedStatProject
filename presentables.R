@@ -39,6 +39,7 @@ cm_education <- train_df[, c(5, dom_education)] %>%
 cm_education <- cm_education[,2:ncol(cm_education)]
 rownames(cm_education) <- L2_cat[, 2] %>% t()
 
+
 cm_car <- train_df[, c(5, dom_car)] %>% 
   group_by(CustomermaintypeseeL2) %>% 
   summarise(across(everything(), mean)) 
@@ -120,3 +121,71 @@ cm_socialclass %>% t() %>% CA()
 cm_contrib %>% t() %>% CA()
 cm_education %>% t() %>% CA()
 cm_car %>% t() %>% CA()
+
+
+################################################################################
+# CCA
+
+library(CCA)
+
+ccX <- cm_education
+ccY <- cm_car
+
+colnames(cm_education)
+colnames(cm_car)
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+#-----------
+
+ccX <- cm_income
+ccY <- cm_job
+
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+#----------------
+
+ccX <- cm_religion
+ccY <- cs_job
+
+cc_result <- cc(ccX, ccY)
+cc_result
+plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
+plotable
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
+
+#TODO find why always the same plot
+
+################################################################################
+# MDS
+par(mfrow=c(1,1))
+mds_input_df <- t(cm_car)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+mds_input_df <- t(cm_religion)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+mds_input_df <- t(cm_household)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
