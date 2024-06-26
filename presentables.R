@@ -169,7 +169,7 @@ text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 ################################################################################
 # MDS
 par(mfrow=c(1,1))
-mds_input_df <- t(cm_car)
+mds_input_df <- t(cm_income)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
