@@ -128,6 +128,8 @@ train_df %>% str()
 
 hist(train_df$`Numberofmobilehomepolicies0-1`)
 
+correl <- cor(train_df)
+
 correl_new <- correl %>% as.data.frame() 
 correl_new$first_var <- rownames(correl)
 
@@ -139,7 +141,8 @@ prepared_cors <- prepared_cors %>%
   filter(abs_value != 1)
 prepared_cors %>% View()
 prepared_cors %>% filter(first_var == "Numberofmobilehomepolicies0-1") %>% 
-  arrange(desc(abs_value))
+  arrange(desc(abs_value)) %>% 
+  View()
 
 train_df %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% t()
 # no NA in either of the data sets 
@@ -155,6 +158,24 @@ chosen_cols <- cbind(train_df[,2:3], train_df[,86])
 library(GGally)
 ggpairs(chosen_cols)
 
+# finding patterns in which customers choose to use the caravan policy
+caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberofmobilehomepolicies0-1`) %>% 
+  summarise(no_caravan = n()) %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  mutate(share = no_caravan / sum(no_caravan))  %>% 
+  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  left_join(L2_cat, by = c(CustomermaintypeseeL2 = "X1")) %>%   
+  arrange(desc(share)) %>% 
+  view()
+train_df$CustomerSubtypeseeL0
+caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmobilehomepolicies0-1`) %>% 
+  summarise(no_caravan = n()) %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  mutate(share = no_caravan / sum(no_caravan))  %>% 
+  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  left_join(L0_cat, by = c(CustomerSubtypeseeL0 = "X1")) %>% 
+  arrange(desc(share)) %>% 
+  view()
 
 
 ################################################################################

@@ -101,6 +101,34 @@ cs_job <- train_df[, c(1, dom_job)] %>%
 cs_job <- cs_job[1:40,2:ncol(cs_job)]
 rownames(cs_job) <- L0_cat[1:40, 2] %>% t()
 
+cs_caravan <- train_df[, c(1, 86)] %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  summarise(across(everything(), mean)) 
+cs_caravan <- cs_caravan[1:40,2:ncol(cs_caravan)]
+rownames(cs_caravan) <- L0_cat[1:40, 2] %>% t()
+
+################################################################################
+
+# finding patterns in which customers choose to use the caravan policy
+caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberofmobilehomepolicies0-1`) %>% 
+  summarise(no_caravan = n()) %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  mutate(share = no_caravan / sum(no_caravan))  %>% 
+  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  left_join(L2_cat, by = c(CustomermaintypeseeL2 = "X1")) %>%   
+  arrange(desc(share)) %>% 
+  view()
+train_df$CustomerSubtypeseeL0
+caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmobilehomepolicies0-1`) %>% 
+  summarise(no_caravan = n()) %>% 
+  group_by(CustomerSubtypeseeL0) %>% 
+  mutate(share = no_caravan / sum(no_caravan))  %>% 
+  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  left_join(L0_cat, by = c(CustomerSubtypeseeL0 = "X1")) %>% 
+  arrange(desc(share)) %>% 
+  view()
+
+
 ################################################################################
 # CA
 library(FactoMineR)
@@ -171,7 +199,13 @@ text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 par(mfrow=c(1,1))
 mds_input_df <- t(cm_income)
 
-train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+train_dist <- dist(t(mds_input_df), method = "manhattan") # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+
+train_dist <- dist(t(mds_input_df), method = "euclidean") # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
@@ -189,3 +223,29 @@ train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+
+
+# HIER WEITER 
+
+mds_input_df <- t(cs_caravan)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+# middle class families and affluent young families stechen heraus, passt zur Analyse mit den Anzahlen
+
+#TODO das Gleiche für cm_caravan , da muss datensatz noch angelegt werden  
+
+
+
+
+# interesting, shows that farmers are outliers
+mds_input_df <- t(cm_nopol)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
