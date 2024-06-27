@@ -89,6 +89,12 @@ cm_socialclass <- train_df[, c(5, dom_socialclass)] %>%
 cm_socialclass <- cm_socialclass[,2:ncol(cm_socialclass)]
 rownames(cm_socialclass) <- L2_cat[, 2] %>% t()
 
+cm_caravan <- train_df[, c(5, 86)] %>% 
+  group_by(CustomermaintypeseeL2) %>% 
+  summarise(across(everything(), mean)) 
+cm_caravan <- cm_caravan[,2:ncol(cm_caravan)]
+rownames(cm_caravan) <- L2_cat[, 2] %>% t()
+
 cs_income <- train_df[, c(1, dom_income)] %>% 
   group_by(CustomerSubtypeseeL0) %>% 
   summarise(across(everything(), mean))
@@ -118,7 +124,7 @@ caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberof
   left_join(L2_cat, by = c(CustomermaintypeseeL2 = "X1")) %>%   
   arrange(desc(share)) %>% 
   view()
-train_df$CustomerSubtypeseeL0
+
 caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmobilehomepolicies0-1`) %>% 
   summarise(no_caravan = n()) %>% 
   group_by(CustomerSubtypeseeL0) %>% 
@@ -196,56 +202,67 @@ text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 ################################################################################
 # MDS
-par(mfrow=c(1,1))
-mds_input_df <- t(cm_income)
-
-train_dist <- dist(t(mds_input_df), method = "manhattan") # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
-
-
-train_dist <- dist(t(mds_input_df), method = "euclidean") # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
-
-mds_input_df <- t(cm_religion)
-
-train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
-
-mds_input_df <- t(cm_household)
-
-train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
-
-
-
-# HIER WEITER 
-
-mds_input_df <- t(cs_caravan)
-
-train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
-# middle class families and affluent young families stechen heraus, passt zur Analyse mit den Anzahlen
-
-#TODO das Gleiche für cm_caravan , da muss datensatz noch angelegt werden  
-
-
-
+par(mfrow=c(2,2))
 
 # interesting, shows that farmers are outliers
 mds_input_df <- t(cm_nopol)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
+     main = "MDS using variables regarding no. policies (customer main type)",
+     xlim = c(-0.3, 0.5))
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+
+mds_input_df <- t(cm_contrib)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
+     xlim = c(-1, 2), main = "MDS using variables regarding contribution on policies (customer main type)")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+# farmer also outlier regarding contribution varw; also cruising seniors and careerLoners somehat different
+
+mds_input_df <- t(cm_caravan)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
+     main = "MDS using only no. mobile home policies (customer main type)", 
+     xlim = c(-0.1, 0.07))
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+# driven Growers have higher probability to be customer of caravan policy than the others and we see indeed it is seperated by MDS
+
+
+mds_input_df <- t(cs_caravan)
+
+train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2",
+     xlim = c(-0.1, 0.1),
+     main = "MDS using only no. mobile home policies (customer sub type)")
+text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
+# middle class families and affluent young families stechen heraus, passt zur Analyse mit den Anzahlen
+par(mfrow=c(1,1))
+
+#-----------------
+# backup, for further investigation part: we observe 3 groups -> could be starting point for clustering algorithm
+# e.g. k means with k = 3 to investigate what makes groups distinct
+mds_input_df_with_orig_id <- train_df %>% mutate(orig_id=row_number())
+
+set.seed(123)
+mds_input_df_with_orig_id <- mds_input_df_with_orig_id %>% sample_n(500) #using less rowss to save computation time
+vec_orig_ids <- mds_input_df_with_orig_id[,"orig_id"]
+vec_orig_ids
+mds_input_df <- mds_input_df_with_orig_id %>% select(-orig_id)
+
+train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference
+mds_result <- cmdscale(train_dist)
+
+observed_var <- mds_input_df$Highleveleducation
+no_var_levels <- length(unique(observed_var))
+
+plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
+text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
+     pos = 4)
 
