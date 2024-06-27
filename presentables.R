@@ -139,13 +139,7 @@ caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmo
 # CA
 library(FactoMineR)
 
-# summary(CA(ca_df) , nbelements = Inf)
-
-ca_df <- t(cm_nopol)
-
-CA(ca_df)
-rownames(cmtype)
-
+cm_nopol %>% t() %>% CA()
 #TODO aus Gespr. schauen wie wir Prozentzahlen implementieren
 # --> farmers seem to be outlier , thus they are excluded by 1:9 above in cmtype creation
 
@@ -159,46 +153,31 @@ cm_car %>% t() %>% CA()
 
 ################################################################################
 # CCA
+par(mfrow=c(1,2))
 
 library(CCA)
-
-ccX <- cm_education
-ccY <- cm_car
-
-colnames(cm_education)
 colnames(cm_car)
-cc_result <- cc(ccX, ccY)
-cc_result
-plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
-plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
-text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
-
-#-----------
-
-ccX <- cm_income
-ccY <- cm_job
+ccX <- cm_car[,1:2] # only taking the positive directing columns, i.e. 1 or 2 cars
+ccY <-cm_education
 
 cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
-#----------------
 
-ccX <- cm_religion
-ccY <- cs_job
+ccX <- cm_religion[,1:3]
+ccY <- cm_education
 
 cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2")
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
-#TODO find why always the same plot
 
 ################################################################################
 # MDS
