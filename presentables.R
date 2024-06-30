@@ -28,7 +28,7 @@ dom_income <- 37:41
 dom_education <- 16:18
 dom_household <- 14:15
 dom_religion <- 6:9
-dom_job <- 19:24
+dom_job <- 20:24
 
 dom_contrib <- 44:64
 dom_nopol <- 65:86
@@ -125,6 +125,13 @@ caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberof
   arrange(desc(share)) %>% 
   view()
 
+ggplot(caravan_customers_main, aes(x = reorder(X2, -share), y = share)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "customer main type", y = "share of no. mobile home policies = 1") +
+  theme_classic()
+# used in MDS section of presentation for verification
+
+
 caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmobilehomepolicies0-1`) %>% 
   summarise(no_caravan = n()) %>% 
   group_by(CustomerSubtypeseeL0) %>% 
@@ -134,10 +141,16 @@ caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmo
   arrange(desc(share)) %>% 
   view()
 
+ggplot(caravan_customers_sub[1:10,], aes(x = reorder(X2, -share), y = share)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "customer sub type", y = "share of no. mobile home policies = 1") + 
+  theme_classic()
+
 
 ################################################################################
 # CA
 library(FactoMineR)
+par(mfrow=c(2,2))
 
 cm_nopol %>% t() %>% CA()
 #TODO aus Gespr. schauen wie wir Prozentzahlen implementieren
@@ -164,7 +177,8 @@ cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6))
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6),
+     ylim=c(-2, 1.5))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 
@@ -175,14 +189,14 @@ cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6))
+plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6), 
+     ylim=c(-2, 1.5))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 
 ################################################################################
 # MDS
 par(mfrow=c(2,2))
-
 # interesting, shows that farmers are outliers
 mds_input_df <- t(cm_nopol)
 
@@ -202,6 +216,7 @@ plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2",
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 # farmer also outlier regarding contribution varw; also cruising seniors and careerLoners somehat different
 
+
 mds_input_df <- t(cm_caravan)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
@@ -211,7 +226,6 @@ plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2",
      xlim = c(-0.1, 0.07))
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 # driven Growers have higher probability to be customer of caravan policy than the others and we see indeed it is seperated by MDS
-
 
 mds_input_df <- t(cs_caravan)
 
@@ -223,25 +237,4 @@ plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2",
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 # middle class families and affluent young families stechen heraus, passt zur Analyse mit den Anzahlen
 par(mfrow=c(1,1))
-
-#-----------------
-# backup, for further investigation part: we observe 3 groups -> could be starting point for clustering algorithm
-# e.g. k means with k = 3 to investigate what makes groups distinct
-mds_input_df_with_orig_id <- train_df %>% mutate(orig_id=row_number())
-
-set.seed(123)
-mds_input_df_with_orig_id <- mds_input_df_with_orig_id %>% sample_n(500) #using less rowss to save computation time
-vec_orig_ids <- mds_input_df_with_orig_id[,"orig_id"]
-vec_orig_ids
-mds_input_df <- mds_input_df_with_orig_id %>% select(-orig_id)
-
-train_dist <- dist(mds_input_df) # should be then always two vectors of size 1000 in distance difference
-mds_result <- cmdscale(train_dist)
-
-observed_var <- mds_input_df$Highleveleducation
-no_var_levels <- length(unique(observed_var))
-
-plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2")
-text(mds_result, labels = rownames(mds_input_df), cex = 0.8, 
-     pos = 4)
 
