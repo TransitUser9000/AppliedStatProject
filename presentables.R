@@ -21,7 +21,7 @@ test_df <- test_df %>% setNames(descriptive_colnames$Description)
 
 ################################################################################
 # CREATE DATA SUBSETS
-
+# dom := "domain" 
 dom_socialclass <- 25:29
 dom_car <- 32:34
 dom_income <- 37:41
@@ -177,7 +177,8 @@ cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6),
+plot(plotable, xlab = "1st. canonical variate of car vars.", 
+     ylab = "1st. canonical variate of education vars.", xlim=c(-1.6, 1.6),
      ylim=c(-2, 1.5))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
@@ -189,7 +190,8 @@ cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])
 plotable
-plot(plotable, xlab = "Dimension 1", ylab = "Dimension 2", xlim=c(-1.6, 1.6), 
+plot(plotable, xlab = "1st. canonical variate of religion vars.", 
+     ylab = "1st. canonical variate of education vars.", xlim=c(-1.6, 1.6), 
      ylim=c(-2, 1.5))
 text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
