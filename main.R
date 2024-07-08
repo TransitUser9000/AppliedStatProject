@@ -449,11 +449,9 @@ library(CCA)
 
 
 
-ccX <- cm_education
-ccY <- cm_car
+ccX <- train_df[,dom_education]
+ccY <- train_df[,dom_car]
 
-colnames(cm_education)
-colnames(cm_car)
 cc_result <- cc(ccX, ccY)
 cc_result
 plotable <- cbind(cc_result$scores$xscores[,1], cc_result$scores$yscores[,1])

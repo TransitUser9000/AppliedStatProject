@@ -116,11 +116,11 @@ rownames(cs_caravan) <- L0_cat[1:40, 2] %>% t()
 ################################################################################
 
 # finding patterns in which customers choose to use the caravan policy
-caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberofmobilehomepolicies0-1`) %>% 
+caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `n_mobilehomepolicies0-1`) %>% 
   summarise(no_caravan = n()) %>% 
   group_by(CustomermaintypeseeL2) %>% 
   mutate(share = no_caravan / sum(no_caravan))  %>% 
-  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  filter(`n_mobilehomepolicies0-1` == 1) %>% 
   left_join(L2_cat, by = c(CustomermaintypeseeL2 = "X1")) %>%   
   arrange(desc(share)) %>% 
   view()
@@ -128,23 +128,25 @@ caravan_customers_main <- train_df %>% group_by(CustomermaintypeseeL2, `Numberof
 ggplot(caravan_customers_main, aes(x = reorder(X2, -share), y = share)) + 
   geom_bar(stat = "identity") + 
   labs(x = "customer main type", y = "share of no. mobile home policies = 1") +
-  theme_classic()
+  ggtitle("N. o. customers using mobile home policy per customer main type") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 # used in MDS section of presentation for verification
 
-
-caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `Numberofmobilehomepolicies0-1`) %>% 
+# not used in presentation
+caravan_customers_sub <- train_df %>% group_by(CustomerSubtypeseeL0, `n_mobilehomepolicies0-1`) %>% 
   summarise(no_caravan = n()) %>% 
   group_by(CustomerSubtypeseeL0) %>% 
   mutate(share = no_caravan / sum(no_caravan))  %>% 
-  filter(`Numberofmobilehomepolicies0-1` == 1) %>% 
+  filter(`n_mobilehomepolicies0-1` == 1) %>% 
   left_join(L0_cat, by = c(CustomerSubtypeseeL0 = "X1")) %>% 
   arrange(desc(share)) %>% 
   view()
 
 ggplot(caravan_customers_sub[1:10,], aes(x = reorder(X2, -share), y = share)) + 
   geom_bar(stat = "identity") + 
-  labs(x = "customer sub type", y = "share of no. mobile home policies = 1") + 
-  theme_classic()
+  labs(x = "customer sub type", y = "share of no. mobile home policies = 1") +
+  ggtitle("N. o. customers using mobile home policy per customer sub type")
 
 
 ################################################################################
@@ -153,12 +155,10 @@ library(FactoMineR)
 par(mfrow=c(2,2))
 
 cm_nopol %>% t() %>% CA()
-#TODO aus Gespr. schauen wie wir Prozentzahlen implementieren
-# --> farmers seem to be outlier , thus they are excluded by 1:9 above in cmtype creation
 
 cm_job %>% t() %>% CA()
-cs_job %>% t() %>% CA()
-cm_socialclass %>% t() %>% CA()
+cs_job %>% t() %>% CA() # not in presentation
+cm_socialclass %>% t() %>% CA() # not in presentation
 cm_contrib %>% t() %>% CA()
 cm_education %>% t() %>% CA()
 cm_car %>% t() %>% CA()
@@ -196,14 +196,14 @@ text(plotable, labels = rownames(plotable), cex = 0.8, pos = 4)
 
 ################################################################################
 # MDS
-par(mfrow=c(2,2))
+par(mfrow=c(1,2))
 # interesting, shows that farmers are outliers
 mds_input_df <- t(cm_nopol)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
-     main = "MDS using variables regarding no. policies (customer main type)",
+     main = "MDS using vars. regarding no. policies",
      xlim = c(-0.3, 0.5))
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 
@@ -212,10 +212,11 @@ mds_input_df <- t(cm_contrib)
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
 mds_result <- cmdscale(train_dist)
 plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2", 
-     xlim = c(-1, 2), main = "MDS using variables regarding contribution on policies (customer main type)")
+     xlim = c(-1, 2), main = "MDS using vars. regarding contrib. on policies")
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 # farmer also outlier regarding contribution varw; also cruising seniors and careerLoners somehat different
 
+par(mfrow=c(1,1))
 
 mds_input_df <- t(cm_caravan)
 
@@ -227,6 +228,7 @@ plot(mds_result, type = "n", xlab = "Dimension 1", ylab = "Dimension 2",
 text(mds_result, labels = colnames(mds_input_df), cex = 0.8, pos = 4)
 # driven Growers have higher probability to be customer of caravan policy than the others and we see indeed it is seperated by MDS
 
+# not in presentation: 
 mds_input_df <- t(cs_caravan)
 
 train_dist <- dist(t(mds_input_df)) # should be then always two vectors of size 1000 in distance difference
